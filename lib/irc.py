@@ -13,7 +13,7 @@ class irc(object):
         data = self.sock.recv(1024).decode('utf-8')
         if self._check_ping(data):
             print('Sending Pong')
-            self.sock.send(b'PONG')
+            self.sock.send('PONG')
         return data
    
     def send_message(self, message):

@@ -1,0 +1,11 @@
+{
+    "server": "irc.chat.twitch.tv",
+
+    "port": 6667,
+	
+    "username": "twitchfightsbots",
+
+    "password": "put your oauth token here",
+
+    "channel": "#twitchfightsbots"
+}
