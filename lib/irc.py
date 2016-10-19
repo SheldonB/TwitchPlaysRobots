@@ -38,4 +38,5 @@ class irc(object):
 
         sock.send(bytes('JOIN %s\r\n' % (self.config['channel']), 'utf-8'))
 
+        print('Successful connection to %s:%s' % (self.config['server'], self.config['port']))
         return sock
