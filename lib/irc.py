@@ -1,8 +1,9 @@
-import socket, sys
+import socket, sys, logging
 
 class irc(object):
     def __init__(self, config):
         self.config = config
+        self.logger = logging.getLogger()
         self.sock = self.get_socket_connection()
 
     def _check_ping(self, data):
@@ -12,12 +13,13 @@ class irc(object):
     def recieve_message(self):
         data = self.sock.recv(1024).decode('utf-8')
         if self._check_ping(data):
-            print('Sending Pong')
+            self.logger.debug('Sending Pong')
             self.sock.send(b'PONG')
         return data
    
     def send_message(self, message):
         self.sock.send(bytes('PRIVMSG %s :%s\r\n' % (self.config['channel'], message), 'utf-8'))
+        self.logger.send('Sending Message: %s' % (message))
 
     def get_socket_connection(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,7 +28,7 @@ class irc(object):
         try:
             sock.connect((self.config['server'], self.config['port']))
         except:
-            print('Unable to connect to %s:%s' % (self.config['server'], self.config['port']))
+            self.logger.exception('Unable to connect to %s:%s' % (self.config['server'], self.config['port']))
             sys.exit()
 
         sock.settimeout(None)
@@ -38,5 +40,6 @@ class irc(object):
 
         sock.send(bytes('JOIN %s\r\n' % (self.config['channel']), 'utf-8'))
 
-        print('Successful connection to %s:%s' % (self.config['server'], self.config['port']))
+        self.logger.info('Successful connection to %s:%s' % (self.config['server'], self.config['port']))
         return sock
+
