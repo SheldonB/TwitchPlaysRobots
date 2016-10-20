@@ -14,13 +14,13 @@ def _parse_message(msg):
 
     if _check_command(parsed_msg):
         command = _parse_command(parsed_msg)
-        argument = _parse_argument(command)
+        argument = _parse_argument(parsed_msg)
 
         return {
                 'username': re.findall(r'^:([a-za-z0-9_]+)\!', msg)[0],
                 'message': parsed_msg,
                 'command': command,
-                'arguement': argument
+                'argument': argument
         }
 
     return {
@@ -36,7 +36,13 @@ def _parse_command(msg):
     return re.findall(r'!([A-Za-z]*)', msg)[0]
 
 def _parse_argument(command):
-    argument = re.findall(r'[A-Za-z]* ([0-9]*)', command)
+    """ Parse out the argument from the
+    command. This argument is for the amount
+    to move forward of backwards and then the
+    degrees to turn. If no argument is found
+    then the argument is set to 1.
+    """
+    argument = re.findall(r'![A-Za-z]* ([0-9]*)', command)
     if not argument:
         argument = 1
     else:
