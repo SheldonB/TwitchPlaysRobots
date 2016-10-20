@@ -1,4 +1,12 @@
-import re
+import re, logging
+
+logger = logging.getLogger()
+
+COMMAND_TABLE = (
+            'FORWARD',
+            'BACKWARD',
+            'TURN'
+        )
 
 def process_message(msg):
     if _check_message(msg):
@@ -30,10 +38,14 @@ def _parse_message(msg):
 
 def _check_command(msg):
     if re.match(r'![a-zA-Z]* ?[0-9]*', msg):
-        return True
+        parsed_command = _parse_command(msg)
+        for command in COMMAND_TABLE:
+            if parsed_command == command:
+                return True
+    return False
 
 def _parse_command(msg):
-    return re.findall(r'!([A-Za-z]*)', msg)[0]
+    return re.findall(r'!([A-Za-z]*)', msg)[0].upper()
 
 def _parse_argument(command):
     """ Parse out the argument from the
