@@ -5,7 +5,8 @@ logger = logging.getLogger()
 COMMAND_TABLE = (
             'FORWARD',
             'BACKWARD',
-            'TURN'
+            'TURN',
+            'JOIN'
         )
 
 def process_message(msg):
@@ -25,19 +26,19 @@ def _parse_message(msg):
         argument = _parse_argument(parsed_msg)
 
         return {
-                'username': re.findall(r'^:([a-za-z0-9_]+)\!', msg)[0],
+                'username': re.findall(r'^:([A-Za-z0-9_]+)\!', msg)[0],
                 'message': parsed_msg,
                 'command': command,
                 'argument': argument
         }
 
     return {
-            'username': re.findall(r'^:([a-za-z0-9_]+)\!', msg)[0],
+            'username': re.findall(r'^:([A-Za-z0-9_]+)\!', msg)[0],
             'message': parsed_msg,
     }
 
 def _check_command(msg):
-    if re.match(r'![a-zA-Z]* ?[0-9]*', msg):
+    if re.match(r'![a-zA-Z]* ?[A-Za-z0-9]*', msg):
         parsed_command = _parse_command(msg)
         for command in COMMAND_TABLE:
             if parsed_command == command:
@@ -54,9 +55,9 @@ def _parse_argument(command):
     degrees to turn. If no argument is found
     then the argument is set to 1.
     """
-    argument = re.findall(r'![A-Za-z]* ([0-9]*)', command)
+    argument = re.findall(r'![A-Za-z]* ([A-Za-z0-9]*)', command)
     if not argument:
         argument = 1
     else:
-        argument = argument[0]
+        argument = argument[0].upper()
     return argument
