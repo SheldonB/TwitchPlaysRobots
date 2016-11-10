@@ -2,7 +2,7 @@ import re, json, argparse, logging
 
 from lib import irc, util
 
-class ApplicationServer(object):
+class ApplicationLayer(object):
     RED_TEAM = 'RED'
     BLUE_TEAM = 'BLUE'
     
@@ -51,5 +51,5 @@ if __name__ == '__main__':
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    app = ApplicationServer(config)
+    app = ApplicationLayer(config)
     app.run()
