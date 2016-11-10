@@ -51,7 +51,6 @@ class ServiceLayer(object):
     def __init__(self):
         self.logger = logging.getLogger()
 
-    
     def run(self):
         while True:
             try:
@@ -76,7 +75,6 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
 
     app = ApplicationLayer(config)
-    
     application_process = multiprocessing.Process(target=app.run)
     application_process.start()
     
