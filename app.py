@@ -1,7 +1,13 @@
+import queue
+import multiprocessing
 import re, json, argparse, logging
 
 from lib import irc, util
 
+
+command_queue = multiprocessing.Queue()
+
+ 
 class ApplicationLayer(object):
     RED_TEAM = 'RED'
     BLUE_TEAM = 'BLUE'
@@ -16,16 +22,17 @@ class ApplicationLayer(object):
             msg = util.process_message(self.irc.recieve_message())
 
             if msg:
-                self.logger.debug('Message recieved from %s: %s' % (msg['username'], msg['message']))
+                self.logger.debug('Message recieved from {}: {}'.format(msg['username'],
+                    msg['message']))
 
             if msg and 'command' in msg:
-                self.logger.info('Command recieved from %s: %s %s' % (msg['username'], msg['command'], msg['argument']))
+                self.logger.info('Command recieved from {}: {} {}'.format(msg['username'],
+                    msg['command'], msg['argument']))
 
                 if msg['command'] == 'JOIN':
                     self._assign_team(msg['username'], msg['argument'])
                 else:
-                    # TODO: Package message and put in queue to be sent
-                    return
+                    self._queue_command(msg)
 
     def _assign_team(self, username, team):
         if team == self.RED_TEAM:
@@ -34,6 +41,23 @@ class ApplicationLayer(object):
         elif team == self.BLUE_TEAM:
             self.team_assignments[username] = self.BLUE_TEAM
             self.logger.debug('Assigning {} to blue team.'.format(username))
+
+    def _queue_command(self, msg):
+        command_queue.put('{} {}'.format(msg['command'], msg['argument']))
+        # print(command_queue.get())
+
+
+class ServiceLayer(object):
+    def __init__(self):
+        self.logger = logging.getLogger()
+
+    
+    def run(self):
+        while True:
+            try:
+                item = command_queue.get()
+            except queue.Empty:
+                pass
 
 
 if __name__ == '__main__':
@@ -52,4 +76,11 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
 
     app = ApplicationLayer(config)
-    app.run()
+    
+    application_process = multiprocessing.Process(target=app.run)
+    application_process.start()
+    
+    service = ServiceLayer()
+    service_process = multiprocessing.Process(target=service.run)
+    service_process.start()
+
