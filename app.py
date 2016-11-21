@@ -4,14 +4,13 @@ import re, json, argparse, logging
 
 from lib import irc, util
 
+RED_TEAM = 'RED'
+BLUE_TEAM = 'BLUE'
 
 command_queue = multiprocessing.Queue()
 
- 
 class ApplicationLayer(object):
-    RED_TEAM = 'RED'
-    BLUE_TEAM = 'BLUE'
-    
+
     def __init__(self, config):
         self.irc = irc.irc(config)
         self.logger = logging.getLogger()
@@ -32,19 +31,20 @@ class ApplicationLayer(object):
                 if msg['command'] == 'JOIN':
                     self._assign_team(msg['username'], msg['argument'])
                 else:
-                    self._queue_command(msg)
+                    if msg['username'] in self.team_assignments:
+                        msg['team'] = self.team_assignments[msg['username']]
+                        self._queue_command(msg)
 
     def _assign_team(self, username, team):
-        if team == self.RED_TEAM:
-            self.team_assignments[username] = self.RED_TEAM
+        if team == RED_TEAM:
+            self.team_assignments[username] = RED_TEAM
             self.logger.debug('Assigning {} to red team.'.format(username))
-        elif team == self.BLUE_TEAM:
-            self.team_assignments[username] = self.BLUE_TEAM
+        elif team == BLUE_TEAM:
+            self.team_assignments[username] = BLUE_TEAM
             self.logger.debug('Assigning {} to blue team.'.format(username))
 
     def _queue_command(self, msg):
-        command_queue.put('{} {}'.format(msg['command'], msg['argument']))
-        # print(command_queue.get())
+        command_queue.put(msg)
 
 
 class ServiceLayer(object):
@@ -55,6 +55,11 @@ class ServiceLayer(object):
         while True:
             try:
                 item = command_queue.get()
+                print('{} {} {}'.format(item['team'], item['command'], item['argument']))
+                if item['team'] == RED_TEAM:
+                    print('Send to red')
+                elif item['team'] == BLUE_TEAM:
+                    print('Send to blue')
             except queue.Empty:
                 pass
 
@@ -77,7 +82,7 @@ if __name__ == '__main__':
     app = ApplicationLayer(config)
     application_process = multiprocessing.Process(target=app.run)
     application_process.start()
-    
+
     service = ServiceLayer()
     service_process = multiprocessing.Process(target=service.run)
     service_process.start()
