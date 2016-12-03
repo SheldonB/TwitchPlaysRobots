@@ -54,11 +54,17 @@ class ServiceLayer(object):
 
     def run(self):
         while True:
+            msg = self.radio.recieve_message()
+            print('Here')
+            if msg:
+                print(msg)
+
             try:
+                print('Before get')
                 item = command_queue.get()
-                self.logger.debug('Sending packet: TEAM:{} COMMAND:{} ARGUMENT:{}'.format(item['team'],
-                                                                                          item['command'],
-                                                                                          item['argument']))
+                print('After get')
+                self.logger.debug('Sending packet: TEAM:{} COMMAND:{} ARGUMENT:{}'.format(
+                                    item['team'], item['command'], item['argument']))
                 if item['team'] == RED_TEAM:
                     self.radio.send_message('{}:{}'.format(item['command'], item['argument']))
                 elif item['team'] == BLUE_TEAM:
