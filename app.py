@@ -2,7 +2,7 @@ import queue
 import multiprocessing
 import re, json, argparse, logging
 
-from lib import irc, util
+from lib import irc, util, rf_24
 
 RED_TEAM = 'RED'
 BLUE_TEAM = 'BLUE'
@@ -50,14 +50,17 @@ class ApplicationLayer(object):
 class ServiceLayer(object):
     def __init__(self):
         self.logger = logging.getLogger()
+        self.radio = rf_24.Radio()
 
     def run(self):
         while True:
             try:
                 item = command_queue.get()
-                print('{} {} {}'.format(item['team'], item['command'], item['argument']))
+                self.logger.debug('Sending packet: TEAM:{} COMMAND:{} ARGUMENT:{}'.format(item['team'],
+                                                                                          item['command'],
+                                                                                          item['argument']))
                 if item['team'] == RED_TEAM:
-                    print('Send to red')
+                    self.radio.send_message('{}:{}'.format(item['command'], item['argument']))
                 elif item['team'] == BLUE_TEAM:
                     print('Send to blue')
             except queue.Empty:
