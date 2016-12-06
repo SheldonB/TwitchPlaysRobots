@@ -1,13 +1,14 @@
 import queue
 import multiprocessing
-import re, json, argparse, logging
+import re, json, argparse, logging, time
 
 from lib import irc, util, rf_24
 
 RED_TEAM = 'RED'
 BLUE_TEAM = 'BLUE'
 
-command_queue = multiprocessing.Queue()
+red_command_queue = multiprocessing.Queue()
+blue_command_queue = multiprocessing.Queue()
 
 class ApplicationLayer(object):
 
@@ -44,33 +45,69 @@ class ApplicationLayer(object):
             self.logger.debug('Assigning {} to blue team.'.format(username))
 
     def _queue_command(self, msg):
-        command_queue.put(msg)
+        if msg['team'] == RED_TEAM:
+            red_command_queue.put(msg)
+        elif msg['team'] == BLUE_TEAM:
+            blue_command_queue.put(msg)
+             
 
+RED_COMPLETE = 'RED_COMPLETE'
+BLUE_COMPLETE = 'BLUE_COMPLETE'
+TIMEOUT = 5
+RED_PIPE = [0xE8, 0xE8, 0xF0, 0xF0, 0xE1]
+BLUE_PIPE = [0xE8, 0xE8, 0xF0, 0xF0, 0xE2]
 
 class ServiceLayer(object):
     def __init__(self):
         self.logger = logging.getLogger()
         self.radio = rf_24.Radio()
+        self.RED_STATUS = True
+        self.BLUE_STATUS = True
 
     def run(self):
+        last_red_msg_sent = 0
+        last_blue_msg_sent = 0
         while True:
             msg = self.radio.recieve_message()
-            print('Here')
-            if msg:
-                print(msg)
 
-            try:
-                print('Before get')
-                item = command_queue.get()
-                print('After get')
-                self.logger.debug('Sending packet: TEAM:{} COMMAND:{} ARGUMENT:{}'.format(
-                                    item['team'], item['command'], item['argument']))
-                if item['team'] == RED_TEAM:
-                    self.radio.send_message('{}:{}'.format(item['command'], item['argument']))
-                elif item['team'] == BLUE_TEAM:
-                    print('Send to blue')
-            except queue.Empty:
-                pass
+            if msg and msg == RED_COMPLETE:
+                self.logger.debug('Recieved complete from red')
+                self.RED_STATUS = True
+                time.sleep(1)
+            elif msg and msg == BLUE_COMPLETE:
+                self.logger.debug('Recieved complete from blue')
+                self.BLUE_STATUS = True
+                time.sleep(1)
+            
+            if time.time() - last_red_msg_sent > TIMEOUT and not self.RED_STATUS:
+                self.logger.debug('Timeout reached after sending packet to red')
+                self.RED_STATUS = True
+
+            if time.time() - last_blue_msg_sent > TIMEOUT and not self.BLUE_STATUS:
+                self.logger.debug('Timeout reached after sending packet to blue')
+                self.BLUE_STATUS = True
+
+            if  self.RED_STATUS:
+                try:
+                    item = red_command_queue.get_nowait()
+                    self.logger.debug('Sending packet: TEAM:{} COMMAND:{} ARGUMENT:{}'.format(
+                                      item['team'], item['command'], item['argument']))
+                    self.radio.send_message('{}:{}'.format(item['command'], item['argument']), RED_PIPE)
+                    self.RED_STATUS = False
+                    last_red_msg_sent = time.time()
+                except queue.Empty:
+                    pass
+
+            if self.BLUE_STATUS:
+                try:
+                    item = blue_command_queue.get_nowait()
+                    self.logger.debug('Sending packet: TEAM:{} COMMAND:{} ARGUMENT:{}'.format(
+                                      item['team'], item['command'], item['argument']))
+                    self.radio.send_message('{}:{}'.format(item['command'], item['argument']), BLUE_PIPE)
+                    self.BLUE_STATUS = False
+                    last_blue_msg_sent = time.time()
+                except queue.Empty:
+                    pass
 
 
 if __name__ == '__main__':
