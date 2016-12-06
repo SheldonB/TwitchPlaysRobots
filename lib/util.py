@@ -15,7 +15,7 @@ def process_message(msg):
         return parsed_msg
 
 def _check_message(msg):
-    if re.match(r':[0-9A-Za-z]*![0-9A-Za-z]*@[0-9A-Za-z]*.tmi.twitch.tv PRIVMSG #[0-9A-Za-z]* :[!*0-9A-Za-z_]*', msg):
+    if re.match(r':[0-9A-Za-z_]*![0-9A-Za-z_]*@[0-9A-Za-z_]*.tmi.twitch.tv PRIVMSG #[0-9A-Za-z_]* :[!*0-9A-Za-z_]*', msg):
         return True
 
 def _parse_message(msg):
