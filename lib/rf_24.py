@@ -5,8 +5,7 @@ import time
 
 GPIO.setmode(GPIO.BCM)
 
-pipes = [[0xE8, 0xE8, 0xF0, 0xF0, 0xE1],
-         [0xF0, 0xF0, 0xF0, 0xF0, 0xE1]]
+reading_pipe = [0xF0, 0xF0, 0xF0, 0xF0, 0xE1]
 
 class Radio:
     def __init__(self):
@@ -24,17 +23,15 @@ class Radio:
         self.radio.enableDynamicPayloads()
         self.radio.enableAckPayload()
 
-        self.radio.openWritingPipe(pipes[0])
-        self.radio.openReadingPipe(1, pipes[1])
+        self.radio.openReadingPipe(1, reading_pipe)
 
-    def send_message(self, msg):
-        print(msg)
+    def send_message(self, msg, radio_pipe):
+        self.radio.openWritingPipe(radio_pipe)
         self.radio.write(bytes(msg, 'utf-8'))
 
     def recieve_message(self):
-        print('Here')
         self.radio.startListening()
-        #time.sleep(1/10)
+        time.sleep(1)
         if self.radio.available():
             recieved_message = []
             self.radio.read(recieved_message, self.radio.getDynamicPayloadSize())
@@ -43,11 +40,9 @@ class Radio:
             for n in recieved_message:
                 if n >= 32 and n <= 126:
                     string += chr(n)
-            #time.sleep(1/10)
             self.radio.stopListening()
             return string
 
-        #time.sleep(1/10)
         self.radio.stopListening()
         return None
 
