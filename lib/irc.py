@@ -15,6 +15,7 @@ class irc(object):
         if self._check_ping(data):
             self.logger.debug('Sending Pong')
             self.sock.send(b'PONG')
+            return None
         return data
    
     def send_message(self, message):
