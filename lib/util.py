@@ -10,6 +10,8 @@ COMMAND_TABLE = (
         )
 
 def process_message(msg):
+    if not msg:
+        return
     if _check_message(msg):
         parsed_msg = _parse_message(msg)
         return parsed_msg
@@ -18,7 +20,7 @@ def _check_message(msg):
     if re.match(r':[0-9A-Za-z_]*![0-9A-Za-z_]*@[0-9A-Za-z_]*.tmi.twitch.tv PRIVMSG #[0-9A-Za-z_]* :[!*0-9A-Za-z_]*', msg):
         return True
 
-def _parse_message(msg):
+def _parse_message(msg):    
     parsed_msg = re.findall(r'PRIVMSG #[0-9A-Za-z]* :([!*0-9A-Za-z_\- ]*)', msg)[0]
 
     if _check_command(parsed_msg):
@@ -55,7 +57,7 @@ def _parse_argument(command):
     degrees to turn. If no argument is found
     then the argument is set to 1.
     """
-    argument = re.findall(r'![A-Za-z]* ([A-Za-z0-9]*)', command)
+    argument = re.findall(r'![A-Za-z]* ([A-Za-z0-9-]*)', command)
     if not argument:
         argument = 1
     else:
